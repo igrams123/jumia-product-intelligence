@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from typing import List
 
 from ..database import get_db
+from ..models import Product
 from ..schemas import ProductResponse
 
 router = APIRouter(
@@ -20,16 +20,13 @@ def get_products(
     db: Session = Depends(get_db)
 ):
 
-    result = db.execute(
-        text("SELECT * FROM products")
+    products = (
+        db.query(Product)
+        .order_by(Product.id.desc())
+        .all()
     )
 
-    products = result.fetchall()
-
-    return [
-        dict(row._mapping)
-        for row in products
-    ]
+    return products
 
 
 # SEARCH PRODUCTS
@@ -42,22 +39,16 @@ def search_products(
     db: Session = Depends(get_db)
 ):
 
-    result = db.execute(
-        text("""
-            SELECT * FROM products
-            WHERE LOWER(name) LIKE LOWER(:keyword)
-        """),
-        {
-            "keyword": f"%{keyword}%"
-        }
+    products = (
+        db.query(Product)
+        .filter(
+            Product.name.ilike(f"%{keyword}%")
+        )
+        .order_by(Product.id.desc())
+        .all()
     )
 
-    products = result.fetchall()
-
-    return [
-        dict(row._mapping)
-        for row in products
-    ]
+    return products
 
 
 # FILTER PRODUCTS
@@ -71,21 +62,12 @@ def filter_products(
     db: Session = Depends(get_db)
 ):
 
-    result = db.execute(
-        text("""
-            SELECT * FROM products
-            WHERE price >= :min_price
-            AND price <= :max_price
-        """),
-        {
-            "min_price": min_price,
-            "max_price": max_price
-        }
+    products = (
+        db.query(Product)
+        .filter(Product.price >= min_price)
+        .filter(Product.price <= max_price)
+        .order_by(Product.price.asc())
+        .all()
     )
 
-    products = result.fetchall()
-
-    return [
-        dict(row._mapping)
-        for row in products
-    ]
+    return products
