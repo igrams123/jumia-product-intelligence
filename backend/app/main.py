@@ -4,7 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from .models import Base
 from .routers import products
+import os
 
+
+@app.get("/db-check")
+def db_check():
+    return {
+        "database_url": os.getenv("DATABASE_URL")
+    }
 # CREATE TABLES
 Base.metadata.create_all(bind=engine)
 
