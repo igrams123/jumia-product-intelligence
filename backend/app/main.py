@@ -1,23 +1,44 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .database import engine
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from sqlalchemy import text
+
+from .database import engine, SessionLocal
 from .models import Base
 from .routers import products
-import os
+from .scraper import scrape_all_phones
 
-
-@app.get("/db-check")
-def db_check():
-    return {
-        "database_url": os.getenv("DATABASE_URL")
-    }
 # CREATE TABLES
 Base.metadata.create_all(bind=engine)
 
+# CREATE APP
 app = FastAPI(
     title="Jumia Product Intelligence API"
 )
+
+# DATABASE CHECK ROUTE
+@app.get("/db-check")
+def db_check():
+
+    db = SessionLocal()
+
+    try:
+
+        result = db.execute(
+            text("SELECT COUNT(*) FROM products")
+        )
+
+        count = result.scalar()
+
+        return {
+            "products_in_db": count
+        }
+
+    finally:
+        db.close()
+
 
 # CORS
 app.add_middleware(
@@ -31,6 +52,19 @@ app.add_middleware(
 # ROUTES
 app.include_router(products.router)
 
+# START SCHEDULER
+scheduler = BackgroundScheduler()
+
+scheduler.add_job(
+    scrape_all_phones,
+    "interval",
+    hours=1,
+    max_instances=1
+)
+
+scheduler.start()
+
+# HOME
 @app.get("/")
 def home():
     return {
