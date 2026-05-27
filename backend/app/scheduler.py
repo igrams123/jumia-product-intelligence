@@ -7,7 +7,8 @@ scheduler = BlockingScheduler()
 scheduler.add_job(
     scrape_all_phones,
     "interval",
-    hours=1
+    hours=1,
+    max_instances=1
 )
 
 print("=" * 60)
@@ -15,4 +16,8 @@ print("AUTO SCRAPER STARTED")
 print("SCRAPING EVERY 1 HOUR")
 print("=" * 60)
 
+# RUN IMMEDIATELY ON START
+scrape_all_phones()
+
+# START SCHEDULER
 scheduler.start()

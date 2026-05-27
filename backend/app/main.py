@@ -1,12 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
 from .database import engine
 from .models import Base
 from .routers import products
-from .scraper import scrape_all_phones
 
 # CREATE TABLES
 Base.metadata.create_all(bind=engine)
@@ -26,21 +23,6 @@ app.add_middleware(
 
 # ROUTES
 app.include_router(products.router)
-
-# START SCHEDULER
-scheduler = BackgroundScheduler()
-
-scheduler.add_job(
-    scrape_all_phones,
-    "interval",
-    hours=1,
-    max_instances=1
-)
-
-scheduler.start()
-
-# RUN SCRAPER IMMEDIATELY
-scrape_all_phones()
 
 @app.get("/")
 def home():
