@@ -99,6 +99,13 @@ def scrape_all_phones():
 
     try:
 
+        print("=" * 80)
+        print("CLEARING OLD PRODUCTS")
+
+        # CLEAR OLD PRODUCTS
+        db.query(Product).delete()
+        db.commit()
+
         # SCRAPE MANY PAGES
         for page in range(1, 21):
 
@@ -110,7 +117,8 @@ def scrape_all_phones():
 
             response = requests.get(
                 url,
-                headers=HEADERS
+                headers=HEADERS,
+                timeout=30
             )
 
             print("STATUS:", response.status_code)
@@ -230,45 +238,25 @@ def scrape_all_phones():
                     # AVAILABILITY
                     availability = "In Stock"
 
-                    # CHECK IF EXISTS
-                    existing = db.query(Product).filter(
-                        Product.product_url == product_url
-                    ).first()
+                    # CREATE PRODUCT
+                    new_product = Product(
+                        name=name,
+                        category=category,
+                        brand=brand,
+                        price=price,
+                        original_price=original_price,
+                        discount=discount,
+                        rating=rating,
+                        reviews=reviews,
+                        seller=seller,
+                        product_url=product_url,
+                        image_url=image_url,
+                        availability=availability,
+                    )
 
-                    # UPDATE EXISTING PRODUCT
-                    if existing:
+                    db.add(new_product)
 
-                        existing.name = name
-                        existing.brand = brand
-                        existing.price = price
-                        existing.original_price = original_price
-                        existing.discount = discount
-                        existing.rating = rating
-                        existing.image_url = image_url
-                        existing.availability = availability
-
-                        print(f"UPDATED: {name}")
-
-                    else:
-
-                        new_product = Product(
-                            name=name,
-                            category=category,
-                            brand=brand,
-                            price=price,
-                            original_price=original_price,
-                            discount=discount,
-                            rating=rating,
-                            reviews=reviews,
-                            seller=seller,
-                            product_url=product_url,
-                            image_url=image_url,
-                            availability=availability,
-                        )
-
-                        db.add(new_product)
-
-                        print(f"SAVED: {name}")
+                    print(f"SAVED: {name}")
 
                     total_saved += 1
 
@@ -280,7 +268,7 @@ def scrape_all_phones():
 
         print("=" * 80)
         print("SCRAPING COMPLETED")
-        print(f"TOTAL PRODUCTS PROCESSED: {total_saved}")
+        print(f"TOTAL PRODUCTS SAVED: {total_saved}")
 
     except Exception as e:
         print("SCRAPER ERROR:", e)
