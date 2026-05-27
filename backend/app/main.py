@@ -18,7 +18,19 @@ app = FastAPI(
     title="Jumia Product Intelligence API"
 )
 
-# DATABASE CHECK ROUTE
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ROUTES
+app.include_router(products.router)
+
+# DATABASE CHECK
 @app.get("/db-check")
 def db_check():
 
@@ -40,33 +52,29 @@ def db_check():
         db.close()
 
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ROUTES
-app.include_router(products.router)
-
-# START SCHEDULER
-scheduler = BackgroundScheduler()
-
-scheduler.add_job(
-    scrape_all_phones,
-    "interval",
-    hours=1,
-    max_instances=1
-)
-
-scheduler.start()
-
 # HOME
 @app.get("/")
 def home():
     return {
         "message": "Jumia Product Intelligence API Running"
     }
+
+
+# START SCHEDULER ONLY AFTER STARTUP
+@app.on_event("startup")
+def start_scheduler():
+
+    scheduler = BackgroundScheduler()
+
+    scheduler.add_job(
+        scrape_all_phones,
+        "interval",
+        hours=1,
+        max_instances=1
+    )
+
+    scheduler.start()
+
+    print("=" * 60)
+    print("SCHEDULER STARTED")
+    print("=" * 60)
