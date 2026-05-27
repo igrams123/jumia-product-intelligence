@@ -1,8 +1,10 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "postgresql://postgres:4736@localhost:5432/jumia_db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 print("CONNECTED TO:", DATABASE_URL)
 
@@ -19,9 +21,7 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-# DATABASE DEPENDENCY
 def get_db():
-
     db = SessionLocal()
 
     try:
